@@ -9,7 +9,8 @@
         }
     ],
     "require": {
-        "php": ">=7.1.0"
+        "php": ">=7.1.0",
+        "nikic/php-parser": "^4.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.5",
@@ -26,9 +27,12 @@
     "autoload-dev": {
         "psr-4": {
             "Koriym\\Spaceman\\": [
-                "tests/",
+                "tests/"
+            ],
+            "": [
                 "tests/Fake"
             ]
+
         }
     },
     "scripts": {
@@ -37,7 +41,6 @@
         ],
         "tests": [
             "@cs",
-            "vendor/bin/phpmd src,tests text ./phpmd.xml",
             "vendor/bin/phpstan analyse -l max src tests -c phpstan.neon --no-progress",
             "@test"
         ],
