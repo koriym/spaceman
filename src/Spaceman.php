@@ -8,6 +8,7 @@ use Koriym\Spaceman\Exception\InvalidAstException;
 use PhpParser\BuilderFactory;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 
@@ -16,15 +17,17 @@ final class Spaceman
     public function __invoke(string $code, string $namespace) : string
     {
         $ast = $this->getAst($code);
-        if (! $this->hasNamespace($ast)) {
-            $code = $this->addNamespace($ast, $namespace);
+        if ($this->hasNamespace($ast)) {
+            return '';
         }
-        $ast = $this->getAst($code);
-        $newAst = $this->addPrefixGlobalNamespace($ast);
+        $ast = $this->addNamespace($this->resolveName($ast), $namespace);
 
-        return $this->getPrintedCode($newAst);
+        return $this->getPrintedCode($ast);
     }
 
+    /**
+     * @return Node[]
+     */
     private function getAst(string $code) : array
     {
         $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
@@ -36,16 +39,17 @@ final class Spaceman
         return $ast;
     }
 
-    private function addNamespace(array $ast, string $namespace) : string
+    /**
+     * @return Node[]
+     */
+    private function addNamespace(array $ast, string $namespace) : array
     {
         $factory = new BuilderFactory;
         $node = $factory->namespace($namespace)
             ->addStmts($ast)
             ->getNode();
-        $stmts = [$node];
-        $prettyPrinter = new Standard;
 
-        return $prettyPrinter->prettyPrintFile($stmts);
+        return [$node];
     }
 
     private function hasNamespace(array $ast) : bool
@@ -73,5 +77,17 @@ final class Spaceman
         $traverser->addVisitor($prefixingVisitor);
 
         return $traverser->traverse($ast);
+    }
+
+    /**
+     * @return Node[]
+     */
+    private function resolveName($ast) : array
+    {
+        $nameResolver = new NameResolver();
+        $nodeTraverser = new NodeTraverser;
+        $nodeTraverser->addVisitor($nameResolver);
+
+        return $nodeTraverser->traverse($ast);
     }
 }

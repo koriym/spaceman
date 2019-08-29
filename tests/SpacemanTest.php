@@ -26,23 +26,27 @@ class SpacemanTest extends TestCase
 
     public function test__invoke() : void
     {
-        $code = file_get_contents(__DIR__ . '/Fake/Foo.php');
+        $code = file_get_contents(__DIR__ . '/Fake/Fake.php');
         if (! is_string($code)) {
             throw new \RuntimeException;
         }
-        $namespace = 'Newspace';
+        $namespace = 'Newname\Space';
         $sourceCode = ($this->spaceman)($code, $namespace);
-        $expected = '<?php
+        $expected = <<<'EOT'
+<?php
 
-namespace \Newspace;
+namespace Newname\Space;
 
-class Foo
+use Foo\Bar;
+class Fake
 {
-    public function run($id)
+    public function run()
     {
-        $author = new \Author();
+        new \Author();
+        new \Foo\Bar();
     }
-}';
+}
+EOT;
         $this->assertSame($expected, $sourceCode);
     }
 }
