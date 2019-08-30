@@ -70,18 +70,6 @@ final class Spaceman
     /**
      * @return Node[]
      */
-    private function addPrefixGlobalNamespace(array $ast) : array
-    {
-        $prefixingVisitor = new PrefixingVisitor;
-        $traverser = new NodeTraverser();
-        $traverser->addVisitor($prefixingVisitor);
-
-        return $traverser->traverse($ast);
-    }
-
-    /**
-     * @return Node[]
-     */
     private function resolveName($ast) : array
     {
         $nameResolver = new NameResolver();
