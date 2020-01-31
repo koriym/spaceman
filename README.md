@@ -17,7 +17,7 @@ composer require koriym/spaceman dev-master --dev
 
 use Koriym\Spaceman\Convert;
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+require dirname(__DIR__) . '/vendors/autoload.php';
 
 $sourcePath = __DIR__ . '/service/protected/controllers';
 
