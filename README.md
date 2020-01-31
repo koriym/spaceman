@@ -23,5 +23,5 @@ $sourcePath = __DIR__ . '/service/protected/controllers';
 
 // Rewrite php file with adding namespace declaration starting `$packageName` on directory basis
 $packageName = 'application';
-(new Convert(packageName))($sourcePath);
+(new Convert($packageName))($sourcePath);
 ```
