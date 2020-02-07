@@ -6,23 +6,42 @@ namespace Koriym\Spaceman;
 
 use Koriym\Spaceman\Exception\InvalidAstException;
 use PhpParser\BuilderFactory;
+use PhpParser\Lexer\Emulative;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\Parser\Php7;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter;
 use PhpParser\PrettyPrinter\Standard;
 
 final class Spaceman
 {
     public function __invoke(string $code, string $namespace) : string
     {
-        $ast = $this->getAst($code);
-        if ($this->hasNamespace($ast)) {
+        $lexer = new Emulative([
+            'usedAttributes' => [
+                'comments',
+                'startLine', 'endLine',
+                'startTokenPos', 'endTokenPos',
+            ],
+        ]);
+        $parser = new Php7($lexer);
+        $traverser = new NodeTraverser;
+        $traverser->addVisitor(new NodeVisitor\CloningVisitor());
+        $oldStmts = $parser->parse($code);
+        if ($this->hasNamespace($oldStmts)) {
             return '';
         }
-        $ast = $this->addNamespace($this->resolveName($ast), $namespace);
+        $oldTokens = $lexer->getTokens();
+        $newStmts = $traverser->traverse($oldStmts);
+        // MODIFY $newStmts HERE
+        $newStmts = $this->addNamespace($this->resolveName($newStmts), $namespace);
 
-        return $this->getPrintedCode($ast);
+        $printer = new PrettyPrinter\Standard();
+
+        return $printer->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
     }
 
     /**
