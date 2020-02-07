@@ -11,10 +11,13 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser\Php7;
-use PhpParser\PrettyPrinter;
+use PhpParser\PrettyPrinter\Standard;
 
 final class Spaceman
 {
+    /**
+     * return namespaced code
+     */
     public function __invoke(string $code, string $namespace) : string
     {
         [$oldStmts, $oldTokens, $newStmts] = $this->getAstToken($code);
@@ -23,7 +26,7 @@ final class Spaceman
         }
         $newStmts = $this->addNamespace($this->resolveName($newStmts), $namespace);
 
-        return (new PrettyPrinter\Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
+        return (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
     }
 
     private function getAstToken(string $code) : array
