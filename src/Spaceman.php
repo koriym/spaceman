@@ -25,8 +25,9 @@ final class Spaceman
             return '';
         }
         $newStmts = $this->addNamespace($this->resolveName($newStmts), $namespace);
+        $code = (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
 
-        return (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
+        return $this->addPhpEol($code);
     }
 
     private function getAstToken(string $code) : array
@@ -81,5 +82,14 @@ final class Spaceman
         $nodeTraverser->addVisitor($nameResolver);
 
         return $nodeTraverser->traverse($ast);
+    }
+
+    private function addPhpEol(string $code) : string
+    {
+        if (substr($code, -1) !== "\n") {
+            $code .= PHP_EOL;
+        }
+
+        return $code;
     }
 }
