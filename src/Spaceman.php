@@ -25,7 +25,7 @@ final class Spaceman
             return '';
         }
         $newStmts = $this->addNamespace($this->resolveName($newStmts), $namespace);
-        assert_options(ASSERT_ACTIVE, 1);
+        assert_options(ASSERT_ACTIVE, 0);
         $code = (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
         assert_options(ASSERT_ACTIVE, 1);
 
