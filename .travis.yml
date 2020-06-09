@@ -44,13 +44,6 @@ jobs:
     - wget https://scrutinizer-ci.com/ocular.phar && php ocular.phar code-coverage:upload --format=php-clover coverage.clover;
 
   - stage: Code Quality
-    name: Static analysis
-    php: 7.2
-    install: composer require --dev phpstan/phpstan-shim ^0.10;
-    script:
-    - ./vendor/bin/phpstan analyse -l max -c phpstan.neon src tests --no-progress --no-interaction;
-
-  - stage: Code Quality
     name: Coding standards
     php: 7.2
     install: composer require --dev friendsofphp/php-cs-fixer ^2.0;
