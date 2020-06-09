@@ -42,10 +42,11 @@ class Fake
 {
     public function run()
     {
-        new \Author();
-        new \Foo\Bar();
+        new Author;
+        new \Foo\Bar;
     }
 }
+
 EOT;
         $this->assertSame($expected, $sourceCode);
     }
