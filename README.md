@@ -7,7 +7,7 @@ Dealing with old unnamaspaced code does not seem fun. Something you had to do at
 ## Installation
 
 ```
-composer require koriym/spaceman dev-master --dev
+composer require koriym/spaceman --dev
 ```
 
 ## Usage
