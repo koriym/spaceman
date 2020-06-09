@@ -2,10 +2,9 @@ language: php
 sudo: false
 
 php:
-- 7.1
 - 7.2
 - 7.3
-- nightly
+- 7.4
 
 cache:
   directories:
@@ -42,13 +41,6 @@ jobs:
     - ./vendor/bin/phpunit -v --coverage-clover ./build/logs/clover.xml
     after_script:
     - wget https://scrutinizer-ci.com/ocular.phar && php ocular.phar code-coverage:upload --format=php-clover coverage.clover;
-
-  - stage: Code Quality
-    name: Static analysis
-    php: 7.2
-    install: composer require --dev phpstan/phpstan-shim ^0.10;
-    script:
-    - ./vendor/bin/phpstan analyse -l max -c phpstan.neon src tests --no-progress --no-interaction;
 
   - stage: Code Quality
     name: Coding standards

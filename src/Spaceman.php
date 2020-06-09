@@ -4,39 +4,51 @@ declare(strict_types=1);
 
 namespace Koriym\Spaceman;
 
-use Koriym\Spaceman\Exception\InvalidAstException;
 use PhpParser\BuilderFactory;
+use PhpParser\Lexer\Emulative;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ParserFactory;
+use PhpParser\Parser\Php7;
 use PhpParser\PrettyPrinter\Standard;
 
 final class Spaceman
 {
+    /**
+     * return namespaced code
+     */
     public function __invoke(string $code, string $namespace) : string
     {
-        $ast = $this->getAst($code);
-        if ($this->hasNamespace($ast)) {
+        [$oldStmts, $oldTokens, $newStmts] = $this->getAstToken($code);
+        if ($this->hasNamespace($oldStmts)) {
             return '';
         }
-        $ast = $this->addNamespace($this->resolveName($ast), $namespace);
+        $newStmts = $this->addNamespace($this->resolveName($newStmts), $namespace);
+        assert_options(ASSERT_ACTIVE, 0);
+        $code = (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
+        assert_options(ASSERT_ACTIVE, 1);
 
-        return $this->getPrintedCode($ast);
+        return $this->addPhpEol($code);
     }
 
-    /**
-     * @return Node[]
-     */
-    private function getAst(string $code) : array
+    private function getAstToken(string $code) : array
     {
-        $parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
-        $ast = $parser->parse($code);
-        if ($ast === null) {
-            throw new InvalidAstException($code);
-        }
+        $lexer = new Emulative([
+            'usedAttributes' => [
+                'comments',
+                'startLine', 'endLine',
+                'startTokenPos', 'endTokenPos',
+            ],
+        ]);
+        $parser = new Php7($lexer);
+        $traverser = new NodeTraverser;
+        $traverser->addVisitor(new NodeVisitor\CloningVisitor());
+        $oldStmts = $parser->parse($code);
+        $oldTokens = $lexer->getTokens();
+        $newStmts = $traverser->traverse($oldStmts);
 
-        return $ast;
+        return [$oldStmts, $oldTokens, $newStmts];
     }
 
     /**
@@ -62,11 +74,6 @@ final class Spaceman
         return $NsCheckerVistor->hasNamespace;
     }
 
-    private function getPrintedCode($newAst) : string
-    {
-        return (new Standard)->prettyPrintFile($newAst);
-    }
-
     /**
      * @return Node[]
      */
@@ -77,5 +84,14 @@ final class Spaceman
         $nodeTraverser->addVisitor($nameResolver);
 
         return $nodeTraverser->traverse($ast);
+    }
+
+    private function addPhpEol(string $code) : string
+    {
+        if (substr($code, -1) !== "\n") {
+            $code .= PHP_EOL;
+        }
+
+        return $code;
     }
 }
