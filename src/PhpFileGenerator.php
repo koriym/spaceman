@@ -15,6 +15,10 @@ class PhpFileGenerator
     {
         foreach ($this->filesIterator($path) as $file) {
             /* @var \SplFileInfo $file */
+            if (is_int(strpos($file->getPathname(), '/vendor/'))) {
+                continue;
+            }
+
             yield $file;
         }
     }
