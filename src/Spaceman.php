@@ -79,11 +79,34 @@ final class Spaceman
      */
     private function resolveName($ast) : array
     {
-        $nameResolver = new NameResolver();
+        $nameResolver = new NameResolver(null, [
+            'preserveOriginalNames' => true,
+            'replaceNodes' => true,
+        ]);
         $nodeTraverser = new NodeTraverser;
         $nodeTraverser->addVisitor($nameResolver);
+        $watchVisitor = new GlobalNameClassWatchVisitor;
+        $nodeTraverser->addVisitor($watchVisitor);
+        $travesedAst = $nodeTraverser->traverse($ast);
 
-        return $nodeTraverser->traverse($ast);
+        return $this->importGlobalClass($watchVisitor->globalClassNames, $travesedAst);
+    }
+
+    /**
+     * @param list<class-string> $globalClassNames
+     */
+    private function importGlobalClass(array $globalClassNames, array $ast) : array
+    {
+        $useUse = [];
+        foreach ($globalClassNames as $name) {
+            $useUse[] = new Node\Stmt\UseUse(new Node\Name($name));
+        }
+        if ($globalClassNames) {
+            $use = new Node\Stmt\Use_($useUse);
+            array_push($ast, $use);
+        }
+
+        return $ast;
     }
 
     private function addPhpEol(string $code) : string
