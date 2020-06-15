@@ -8,5 +8,6 @@ class Fake
     {
         new Author;
         new Bar;
+        new LogicException;
     }
 }

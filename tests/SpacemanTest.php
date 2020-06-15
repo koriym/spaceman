@@ -32,7 +32,7 @@ class SpacemanTest extends TestCase
         }
         $namespace = 'Newname\Space';
         $sourceCode = ($this->spaceman)($code, $namespace);
-        $expected = <<<'EOT'
+        $expected = /** @lang php */<<<EOT
 <?php
 
 namespace Newname\Space;
@@ -44,8 +44,10 @@ class Fake
     {
         new Author;
         new \Foo\Bar;
+        new LogicException;
     }
 }
+use Author, LogicException;
 
 EOT;
         $this->assertSame($expected, $sourceCode);

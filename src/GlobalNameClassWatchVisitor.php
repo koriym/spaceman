@@ -16,7 +16,7 @@ class GlobalNameClassWatchVisitor extends NodeVisitorAbstract
 
     public function enterNode(Node $node) : void
     {
-        if ($node instanceof Node\Name\Use_ && count($node->parts) === 1) {
+        if ($node instanceof Node\Name\FullyQualified && count($node->parts) === 1) {
             $target = $node->parts[0];
             $isGlobalClassName = ! function_exists($target) && ! defined($target);
             if ($isGlobalClassName && ! in_array($target, $this->globalClassNames, true)) {

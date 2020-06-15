@@ -89,7 +89,7 @@ final class Spaceman
         $nodeTraverser->addVisitor($watchVisitor);
         $travesedAst = $nodeTraverser->traverse($ast);
 
-        return $this->importGlobalClass($watchVisitor->globalClassNames, $travesedAst);
+        return $this->importGlobalClass(array_unique($watchVisitor->globalClassNames), $travesedAst);
     }
 
     /**
