@@ -37,6 +37,7 @@ class SpacemanTest extends TestCase
 
 namespace Newname\Space;
 
+use Author, LogicException;
 use Foo\Bar;
 class Fake
 {
@@ -47,7 +48,6 @@ class Fake
         new LogicException;
     }
 }
-use Author, LogicException;
 
 EOT;
         $this->assertSame($expected, $sourceCode);
