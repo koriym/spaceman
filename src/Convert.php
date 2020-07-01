@@ -42,7 +42,7 @@ class Convert
 
     private function getNamespace(string $sourcePath, \SplFileInfo $phpFile) : string
     {
-        $relativePath = substr(str_replace($sourcePath, '', (string) $phpFile->getRealPath()), 1);
+        $relativePath = substr(str_replace(rtrim($sourcePath, '/'), '', (string) $phpFile->getRealPath()), 1);
         $dirName = dirname($relativePath);
         $hasDiretocty = $dirName !== '.';
 
