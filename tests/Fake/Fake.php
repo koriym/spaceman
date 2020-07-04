@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 use Foo\Bar;
 
 class Fake

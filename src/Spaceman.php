@@ -25,8 +25,8 @@ final class Spaceman
             return '';
         }
 
-        [$newStmts, $useStmt] = $this->resolveName($newStmts);
-        $newStmts = $this->addNamespace($newStmts, $useStmt, $namespace);
+        [$newStmts, $declareStmts, $useStmt] = $this->resolveName($newStmts);
+        $newStmts = $this->addNamespace($newStmts, $declareStmts, $useStmt, $namespace);
         assert_options(ASSERT_ACTIVE, 0);
         $code = (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
         assert_options(ASSERT_ACTIVE, 1);
@@ -56,15 +56,15 @@ final class Spaceman
     /**
      * @return Node[]
      */
-    private function addNamespace(array $ast, Node\Stmt $useStmt, string $namespace) : array
+    private function addNamespace(array $ast, array $declareStmts, Node\Stmt $useStmt, string $namespace) : array
     {
-        $factory = new BuilderFactory;
-        $node = $factory->namespace($namespace)
-            ->addStmt($useStmt)
-            ->addStmts($ast)
-            ->getNode();
+        $nodes = count($declareStmts) > 0 ? $declareStmts : [];
 
-        return [$node];
+        $nodes[] = (new BuilderFactory())->namespace($namespace)->getNode();
+        $nodes[] = $useStmt;
+        $nodes = array_merge($nodes, $ast);
+
+        return $nodes;
     }
 
     private function hasNamespace(array $ast) : bool
@@ -78,7 +78,7 @@ final class Spaceman
     }
 
     /**
-     * @return array{Node[], Node\Stmt}
+     * @return array{Node[], Node\Stmt\Declare_[], Node\Stmt}
      */
     private function resolveName($ast) : array
     {
@@ -90,11 +90,13 @@ final class Spaceman
         $nodeTraverser->addVisitor($nameResolver);
         $watchVisitor = new GlobalNameClassWatchVisitor;
         $nodeTraverser->addVisitor($watchVisitor);
+        $declareVisitor = new DeclareCollectVisitor();
+        $nodeTraverser->addVisitor($declareVisitor);
         $travesedAst = $nodeTraverser->traverse($ast);
 
         $useStmt = $this->createUseStmt(array_unique($watchVisitor->globalClassNames));
 
-        return [$travesedAst, $useStmt];
+        return [$travesedAst, $declareVisitor->declares, $useStmt];
     }
 
     /**
