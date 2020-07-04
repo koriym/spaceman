@@ -24,7 +24,9 @@ final class Spaceman
         if ($this->hasNamespace($oldStmts)) {
             return '';
         }
-        $newStmts = $this->addNamespace($this->resolveName($newStmts), $namespace);
+
+        [$newStmts, $declareStmts, $useStmt] = $this->resolveName($newStmts);
+        $newStmts = $this->addNamespace($newStmts, $declareStmts, $useStmt, $namespace);
         assert_options(ASSERT_ACTIVE, 0);
         $code = (new Standard)->printFormatPreserving($newStmts, $oldStmts, $oldTokens);
         assert_options(ASSERT_ACTIVE, 1);
@@ -54,14 +56,15 @@ final class Spaceman
     /**
      * @return Node[]
      */
-    private function addNamespace(array $ast, string $namespace) : array
+    private function addNamespace(array $ast, array $declareStmts, Node\Stmt $useStmt, string $namespace) : array
     {
-        $factory = new BuilderFactory;
-        $node = $factory->namespace($namespace)
-            ->addStmts($ast)
-            ->getNode();
+        $nodes = count($declareStmts) > 0 ? $declareStmts : [];
 
-        return [$node];
+        $nodes[] = (new BuilderFactory())->namespace($namespace)->getNode();
+        $nodes[] = $useStmt;
+        $nodes = array_merge($nodes, $ast);
+
+        return $nodes;
     }
 
     private function hasNamespace(array $ast) : bool
@@ -75,7 +78,7 @@ final class Spaceman
     }
 
     /**
-     * @return Node[]
+     * @return array{Node[], Node\Stmt\Declare_[], Node\Stmt}
      */
     private function resolveName($ast) : array
     {
@@ -87,26 +90,26 @@ final class Spaceman
         $nodeTraverser->addVisitor($nameResolver);
         $watchVisitor = new GlobalNameClassWatchVisitor;
         $nodeTraverser->addVisitor($watchVisitor);
+        $declareVisitor = new DeclareCollectVisitor();
+        $nodeTraverser->addVisitor($declareVisitor);
         $travesedAst = $nodeTraverser->traverse($ast);
 
-        return $this->importGlobalClass(array_unique($watchVisitor->globalClassNames), $travesedAst);
+        $useStmt = $this->createUseStmt(array_unique($watchVisitor->globalClassNames));
+
+        return [$travesedAst, $declareVisitor->declares, $useStmt];
     }
 
     /**
-     * @param list<class-string> $globalClassNames
+     * @return Node\Stmt\Nop|Node\Stmt\Use_
      */
-    private function importGlobalClass(array $globalClassNames, array $ast) : array
+    private function createUseStmt(array $globalClassNames) : Node\Stmt
     {
         $useUse = [];
         foreach ($globalClassNames as $name) {
             $useUse[] = new Node\Stmt\UseUse(new Node\Name($name));
         }
-        if ($globalClassNames) {
-            $use = new Node\Stmt\Use_($useUse);
-            array_push($ast, $use);
-        }
 
-        return $ast;
+        return $useUse ? new Node\Stmt\Use_($useUse) : new Node\Stmt\Nop();
     }
 
     private function addPhpEol(string $code) : string

@@ -35,9 +35,12 @@ class SpacemanTest extends TestCase
         $expected = /** @lang php */<<<EOT
 <?php
 
+declare(strict_types=1);
 namespace Newname\Space;
 
+use Author, LogicException;
 use Foo\Bar;
+
 class Fake
 {
     public function run()
@@ -47,7 +50,6 @@ class Fake
         new LogicException;
     }
 }
-use Author, LogicException;
 
 EOT;
         $this->assertSame($expected, $sourceCode);
